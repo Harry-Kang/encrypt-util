@@ -52,6 +52,7 @@ func aesCBCDemo() {
 }
 
 func main() {
+	//test1
 	aesCFBDemo()
 	aesCBCDemo()
 }
