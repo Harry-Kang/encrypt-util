@@ -22,20 +22,29 @@ type cryptWithPub func([]byte, *rsa.PublicKey) ([]byte, error)
 type cryptWithPri func([]byte, *rsa.PrivateKey) ([]byte, error)
 
 type Config struct {
-	ParsePublicKey     parsePublicKey
-	ParsePrivateKey    parsePrivateKey
-	EncryptWithPublic  cryptWithPub
+	//解析公钥的方法
+	ParsePublicKey parsePublicKey
+	//解析私钥的方法
+	ParsePrivateKey parsePrivateKey
+	//rsa公钥加密的方法
+	EncryptWithPublic cryptWithPub
+	//rsa私钥加密的方法
 	EncryptWithPrivate cryptWithPri
-	DecryptWithPub     cryptWithPub
+	//rsa公钥解密的方法
+	DecryptWithPub cryptWithPub
+	//rsa私钥解密的方法
 	DecryptWithPrivate cryptWithPri
 
+	//是否分段加解密
 	CryptSub bool
-	SubStep  int
+	//分段加解密的步长，通常是256
+	SubStep int
 }
 
 //default rsa encrypt
 func Encrypt(data []byte, key []byte, cfg *Config) ([]byte, error) {
 	var buf []byte
+	//if cfg is nil, will use default parse rsa key func and crypt fun
 	if cfg == nil {
 		cfg = &Config{
 			ParsePublicKey:    ParsePKIXPublicKey,
@@ -46,7 +55,7 @@ func Encrypt(data []byte, key []byte, cfg *Config) ([]byte, error) {
 		return buf, errors.New("ParsePublicKey cannot be nil")
 	}
 	if cfg.EncryptWithPublic == nil {
-		return buf, errors.New("EncryptwithPub cannot be nil")
+		return buf, errors.New("EncryptWithPub cannot be nil")
 	}
 
 	publicKey, err := cfg.ParsePublicKey(key)
@@ -55,10 +64,10 @@ func Encrypt(data []byte, key []byte, cfg *Config) ([]byte, error) {
 	}
 
 	if cfg.CryptSub {
-		//if cfg.SubStep <= 0 {
-		//	err = errors.New("RSAConfig.SubStep should be set")
-		//	return buf, err
-		//}
+		if cfg.SubStep <= 0 {
+			err = errors.New("RSAConfig.SubStep should be set")
+			return buf, err
+		}
 
 		n := len(data)
 		for i := 0; i < n; i += cfg.SubStep {
@@ -82,6 +91,7 @@ func Encrypt(data []byte, key []byte, cfg *Config) ([]byte, error) {
 //default rsa decrypt
 func Decrypt(data []byte, key []byte, cfg *Config) ([]byte, error) {
 	var buf []byte
+	//if cfg is nil, will use default parse rsa key func and crypt fun
 	if cfg == nil {
 		cfg = &Config{
 			ParsePrivateKey:    ParsePKCS1PrivateKey,
@@ -120,8 +130,8 @@ func Decrypt(data []byte, key []byte, cfg *Config) ([]byte, error) {
 	return cfg.DecryptWithPrivate(data, privateKey)
 }
 
-func ParsePKIXPublicKey(publickKey []byte) (*rsa.PublicKey, error) {
-	block, _ := pem.Decode(publickKey)
+func ParsePKIXPublicKey(pubKey []byte) (*rsa.PublicKey, error) {
+	block, _ := pem.Decode(pubKey)
 	if block == nil {
 		return nil, errors.New("decode public key error")
 	}
@@ -132,8 +142,8 @@ func ParsePKIXPublicKey(publickKey []byte) (*rsa.PublicKey, error) {
 	return pubInterface.(*rsa.PublicKey), nil
 }
 
-func ParsePKCS1PublicKey(publickKey []byte) (*rsa.PublicKey, error) {
-	block, _ := pem.Decode([]byte(publickKey))
+func ParsePKCS1PublicKey(pubKey []byte) (*rsa.PublicKey, error) {
+	block, _ := pem.Decode(pubKey)
 	if block == nil {
 		return nil, errors.New("decode public key error")
 	}
@@ -141,11 +151,11 @@ func ParsePKCS1PublicKey(publickKey []byte) (*rsa.PublicKey, error) {
 }
 
 func EncryptPKCS1v15(data []byte, key *rsa.PublicKey) ([]byte, error) {
-	return rsa.EncryptPKCS1v15(rand.Reader, key, []byte(data))
+	return rsa.EncryptPKCS1v15(rand.Reader, key, data)
 }
 
 func ParsePKCS1PrivateKey(key []byte) (*rsa.PrivateKey, error) {
-	block, _ := pem.Decode([]byte(key))
+	block, _ := pem.Decode(key)
 	if block == nil {
 		panic("block is nil")
 	}

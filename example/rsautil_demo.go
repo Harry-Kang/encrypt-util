@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto"
 	"encoding/base64"
 	"fmt"
 	"github.com/intrsokx/encrypt-util/rsautil"
@@ -58,18 +59,38 @@ func main() {
 		CryptSub:           true,
 		SubStep:            256,
 	}
-
-	//if cfg is nil, will use default parse rsa key func and crypt fun
 	//cfg = nil
+
+	//加密
 	encrypted, err := rsautil.Encrypt([]byte(data), []byte(pub), cfg)
 	if err != nil {
 		panic(err)
 	}
 	fmt.Println("encrypted base64:", base64.StdEncoding.EncodeToString(encrypted))
 
+	//解密
 	plain, err := rsautil.Decrypt(encrypted, []byte(pri), cfg)
 	if err != nil {
 		panic(err)
 	}
 	fmt.Println("plain:", string(plain))
+
+	//解析公私钥
+	priKey, err := rsautil.ParsePKCS1PrivateKey([]byte(pri))
+	if err != nil {
+		panic(err)
+	}
+	pubKey, err := rsautil.ParsePKIXPublicKey([]byte(pub))
+	if err != nil {
+		panic(err)
+	}
+
+	//私钥加签
+	sign, err := rsautil.SignByPKCS1v15([]byte(data), priKey, crypto.MD5)
+	if err != nil {
+		panic(err)
+	}
+	//公钥验签
+	res := rsautil.VerifySignByPKCS1v15([]byte(data), sign, pubKey, crypto.MD5)
+	fmt.Println("check sign res:", res)
 }
