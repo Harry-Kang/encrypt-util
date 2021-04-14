@@ -1,3 +1,3 @@
-module github.com/Harry-Kang/encrypt-util
+module github.com/intrsokx/encrypt-util
 
 go 1.15

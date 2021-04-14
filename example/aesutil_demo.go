@@ -4,7 +4,7 @@ import (
 	"crypto/md5"
 	"encoding/base64"
 	"fmt"
-	"github.com/Harry-Kang/encrypt-util/aesutil"
+	"github.com/intrsokx/encrypt-util/aesutil"
 )
 
 var (
