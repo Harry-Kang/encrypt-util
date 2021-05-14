@@ -51,7 +51,24 @@ func aesCBCDemo() {
 	fmt.Println("plainText:", string(plainText))
 }
 
+func aesECBDemo() {
+	fmt.Printf("\n\n================ AES ECB DEMO ========================\n")
+
+	cipherText, err := aesutil.ECBEncrypt([]byte(origin), []byte(key), aesutil.PKCS5Padding)
+	if err != nil {
+		panic("aesutil encrypt err:" + err.Error())
+	}
+	fmt.Println("base64 cipherText:", base64.StdEncoding.EncodeToString(cipherText))
+
+	plainText, err := aesutil.ECBDecrypt(cipherText, []byte(key), aesutil.PKCS5Padding)
+	if err != nil {
+		panic("aesutil decrypt err:" + err.Error())
+	}
+	fmt.Println("plainText:", string(plainText))
+}
+
 func main() {
 	aesCFBDemo()
 	aesCBCDemo()
+	aesECBDemo()
 }
